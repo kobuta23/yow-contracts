@@ -1,0 +1,30 @@
+
+
+First off, deploy $YOINK on degenChain
+
+$YOINK is a pureMintable(Burnable)SuperToken
+
+We will initially retain admin powers, and mint a bunch of tokens to our own account.
+
+We'll use a mix of yoinkV1 and yoinkV2
+- the contract from yoinkV2
+- the UI from yoinkV1
+
+We'll need to add the right branding to the yoinkV1 UI 
+
+We then deploy $YOINK (or someone does) on degenChain
+And launch it on Farcaster
+--> this is enough to win the grant
+
+Ideally, we also orchestrate a streamed airdrop to 100 accounts (yoink users + streamYoink users)
+
+We make a post which promises roadmap, utility, and "trust me it's deflationary"
+
+Then we refine the game, and figure out how to launch it...
+
+
+wishlist for the game:
+1. A slightly improved winning condition (use constant speed but you win by having the largest flowrate for 24 "total" hours)
+2. Enough data to show users if they need to topup their wallet
+3. Potentially a bot that replies to the battle post, alerting users to topup before liquidation
+4. Potentially a global bot which announces new battles in the yoink channel (or somewhere else) 
