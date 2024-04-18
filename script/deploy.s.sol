@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.20;
 
 import "forge-std/Script.sol";
 import "../src/YoW.sol";
@@ -35,8 +35,21 @@ contract DeployYoW is Script {
         mint.initialize(STFactory, "yoink", "yoink");
         console.log("Initialized yoink");
 
-        YoW yow = new YoW(yoink, alice, bob);
-        console.log("Deployed yow: ", address(yow));
+
+        console.log("-----");
+        console.log("Deploying Factory: Beacon");
+        address yowBeacon = address(new UpgradeableBeacon(address(new YoW(host))));
+        console.log("deployed yowBeacon: ", yowBeacon);
+
+        // deploy yowFactory
+        console.log("Deploying Factory: Factory");
+        YowFactory yowFactory = new YowFactory(yoink, yowBeacon);
+        console.log("deployed yowFactory: ", address(yowFactory));
+
+        // deploy yow
+        console.log("Deploying YoW");
+        yow = YoW( yowFactory.createYoW(alice, bob) );
+        console.log("deployed yow: ", address(yow));
 
         vm.stopBroadcast();
     }
