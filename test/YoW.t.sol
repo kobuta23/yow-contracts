@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.20;
 
 import "forge-std/Test.sol";
 import "../src/YoW.sol";
@@ -14,6 +14,8 @@ import {ERC1820RegistryCompiled} from
     "@superfluid-finance/ethereum-contracts/contracts/libs/ERC1820RegistryCompiled.sol";
 import { TestToken } from "@superfluid-finance/ethereum-contracts/contracts/utils/TestToken.sol";
 import { SuperToken } from "@superfluid-finance/ethereum-contracts/contracts/superfluid/SuperToken.sol";
+import { UpgradeableBeacon } from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
+import { YowFactory } from "./../src/YowFactory.sol";
 
 interface IMint {
     function initialize(address factory, string memory _name, string memory _symbol) external;
@@ -59,12 +61,22 @@ contract YOWTest is Test {
 
         vm.startPrank(admin);
         yoink = ISuperToken(address(new MintableSuperToken()));
+
         mint = IMint(address(yoink));
+
         console.log("deployed yoink: ", address(yoink));
         mint.initialize(STFactory, "yoink", "yoink");
         console.log("initialize yoink");
-        
-        yow = new YoW(yoink, alice, bob);
+        ISuperfluid host = ISuperfluid(yoink.getHost());
+        // deploy yowBeacon
+        address yowBeacon = address(new UpgradeableBeacon(address(new YoW(host))));
+        console.log("deployed yowBeacon: ", yowBeacon);
+
+        // deploy yowFactory
+        YowFactory yowFactory = new YowFactory(yoink, yowBeacon);
+        console.log("deployed yowFactory: ", address(yowFactory));
+        //yow = new YoW(yoink, alice, bob);
+        yow = YoW( yowFactory.createYoW(alice, bob) );
         console.log("deployed yow: ", address(yow));
     }
 

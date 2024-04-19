@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.20;
 
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {ISuperfluid, ISuperToken, ISuperApp, SuperAppDefinitions} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
@@ -7,6 +7,8 @@ import {ISuperfluidPool} from "@superfluid-finance/ethereum-contracts/contracts/
 import {SuperTokenV1Library} from "@superfluid-finance/ethereum-contracts/contracts/apps/SuperTokenV1Library.sol";
 import {CFASuperAppBase} from "@superfluid-finance/ethereum-contracts/contracts/apps/CFASuperAppBase.sol";
 import {BasicParticle, SemanticMoney, FlowRate, Value, Time} from "@superfluid-finance/solidity-semantic-money/src/SemanticMoney.sol";
+import {IYoW} from "./interfaces/IYoW.sol";
+import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "forge-std/console.sol";
 import "forge-std/console2.sol";
 
@@ -19,7 +21,7 @@ interface IMintableSuperToken {
     function burn(uint256 amount) external;
 }
 
-contract YoW is CFASuperAppBase {
+contract YoW is Initializable, CFASuperAppBase, IYoW {
     using SemanticMoney for BasicParticle;
     using SuperTokenV1Library for ISuperToken;
 
@@ -27,11 +29,6 @@ contract YoW is CFASuperAppBase {
     uint256 public offset;
     Time public gameEnded;
 
-    struct Team {
-        address leader;
-        bool isWinning;
-        address z;
-    }
     
     uint256 public winningCountdownStart; // timestamp of when the team start winning
     uint256 public winningThreshold = 4 hours; // duration of the game
@@ -43,23 +40,25 @@ contract YoW is CFASuperAppBase {
     Team public teamA;
     Team public teamB;
 
-    ISuperToken immutable public yoink;
+    ISuperToken public yoink;
 
     mapping (address => BasicParticle) _userAccounts;
 
     mapping(ISuperToken => bool) internal _acceptedSuperTokens;
 
-    constructor
-        (ISuperToken _yoink, address _TEAMALeader, address _TEAMBLeader) 
-        CFASuperAppBase(ISuperfluid(_yoink.getHost())) {
-            selfRegister(true,true,true);
-            yoink = _yoink;
-            _acceptedSuperTokens[yoink] = true;
-            teamA.leader = _TEAMALeader;
-            teamB.leader = _TEAMBLeader;
-            teamA.z = address(0x0);
-            teamB.z = address(0x1);
-        }
+    constructor(ISuperfluid host) CFASuperAppBase(host) {
+            _disableInitializers();
+    }
+
+    function initialize(ISuperToken yoinkToken, address _teamLeaderA, address _teamLeaderB) external override {
+        yoink = yoinkToken;
+        _acceptedSuperTokens[yoinkToken] = true;
+        teamA.z = address(0x0);
+        teamB.z = address(0x1);
+
+        teamA.leader = _teamLeaderA;
+        teamB.leader = _teamLeaderB;
+    }
     
     /* WINNING FUNCTIONS */
     function timeToEnd() public view returns (uint256) {
@@ -69,6 +68,7 @@ contract YoW is CFASuperAppBase {
     function winningTeam() public view returns (Team memory) {
         return teamA.isWinning ? teamA: teamB;
     }
+
     function losingTeam() public view returns (Team memory) {
         return teamA.isWinning ? teamB: teamA;
     }
